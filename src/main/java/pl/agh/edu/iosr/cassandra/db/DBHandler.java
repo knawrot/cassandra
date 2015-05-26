@@ -30,6 +30,8 @@ public class DBHandler {
 		}
 	}
 	
+	/* every possible entity to be entered
+	 * has to define it's own insertion method */
 	public void insertProduct(int id, String name, String category,
 							String customerName, int price, Date purchaseDate) {	
 		java.sql.Date sqlPurchaseDate = new java.sql.Date(purchaseDate.getTime());
@@ -52,12 +54,14 @@ public class DBHandler {
 				"SELECT * FROM " + columnName
 				+ " WHERE " + columnPrivKeysMap.get(columnName) + "=?;");
 		
-		ResultSet results = DBConnection.getSession().execute(stmt.bind(specificValue));
+		ResultSet results = DBConnection.getSession()
+							.execute(stmt.bind(specificValue));
 		
 		return results.all();
 	}
 	
-	private String parseCreateQuery(String columnName, List<DBColumnDefinition> columns)
+	private String parseCreateQuery(String columnName, 
+									List<DBColumnDefinition> columns)
 					throws Exception {
 		List<String> primaryKeys = new LinkedList<String>();
 		List<String> clusteringKeys = new LinkedList<String>();
