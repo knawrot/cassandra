@@ -1,4 +1,4 @@
-package pl.agh.edu.iosr.cassandra.db.dao;
+package pl.agh.edu.iosr.cassandra.db;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -14,10 +14,10 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
-public class ProductsDAO {
+public class DBHandler {
 	private Map<String,String> columnPrivKeysMap;
 
-	public ProductsDAO() {
+	public DBHandler() {
 		columnPrivKeysMap = new HashMap<String, String>();
 	}
 	
@@ -26,7 +26,7 @@ public class ProductsDAO {
 			DBConnection.getSession().execute(parseCreateQuery(columnName, columns));
 		} catch (Exception e) {
 			System.err.println("View was not registered. Cause:\n" 
-								+ e.getStackTrace());
+								+ e);
 		}
 	}
 	
@@ -47,18 +47,14 @@ public class ProductsDAO {
 		DBConnection.getSession().execute(batchStmt);
 	}
 	
-	public void getSpecificResults(String columnName, String specificValue) {		
+	public List<Row> getSpecificResults(String columnName, String specificValue) {
 		PreparedStatement stmt = DBConnection.getSession().prepare(
 				"SELECT * FROM " + columnName
 				+ " WHERE " + columnPrivKeysMap.get(columnName) + "=?;");
+		
 		ResultSet results = DBConnection.getSession().execute(stmt.bind(specificValue));
-		for (Row row : results) {
-			System.out.println(row.getInt(1) + ", "
-					+ row.getString(2) + ", "
-					+ row.getString(3) + ", "
-					+ row.getInt(4) + ", "
-					+ row.getDate(5));
-		}
+		
+		return results.all();
 	}
 	
 	private String parseCreateQuery(String columnName, List<DBColumnDefinition> columns)
@@ -98,4 +94,9 @@ public class ProductsDAO {
 		columnPrivKeysMap.put(columnName, primaryKeys.get(0));
 		return query.toString();
 	}
+	
+	public void deleteView(String name) {
+		DBConnection.getSession().execute("DROP TABLE IF EXISTS " + name + ";");
+	}
+
 }
