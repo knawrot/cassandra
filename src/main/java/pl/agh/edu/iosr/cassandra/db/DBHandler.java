@@ -1,106 +1,66 @@
 package pl.agh.edu.iosr.cassandra.db;
 
-import java.util.Date;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import pl.agh.edu.iosr.cassandra.db.config.DBColumnDefinition;
 import pl.agh.edu.iosr.cassandra.db.connection.DBConnection;
 
-import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
 public class DBHandler {
-	private Map<String,String> columnPrivKeysMap;
+	private static final String QUERIES_TABLE = "queries";
+	private static final String RESULTS_TABLE = "results";
+	private int idCounter;
 
 	public DBHandler() {
-		columnPrivKeysMap = new HashMap<String, String>();
+		idCounter = updateIdCounter();
 	}
 	
-	public void registerView(String columnName, List<DBColumnDefinition> columns) {		
-		try {
-			DBConnection.getSession().execute(parseCreateQuery(columnName, columns));
-		} catch (Exception e) {
-			System.err.println("View was not registered. Cause:\n" 
-								+ e);
-		}
+	private int updateIdCounter() {
+		Set<Integer> ids = getAllQueries().keySet();
+		return (ids.size() == 0) ? 0 : Collections.max(ids) + 1;
 	}
 	
-	/* every possible entity to be entered
-	 * has to define it's own insertion method */
-	public void insertProduct(int id, String name, String category,
-							String customerName, int price, Date purchaseDate) {	
-		java.sql.Date sqlPurchaseDate = new java.sql.Date(purchaseDate.getTime());
-		PreparedStatement stmt;
-		BatchStatement batchStmt = new BatchStatement();
-		for (String viewId : columnPrivKeysMap.keySet()) {
-			stmt = DBConnection.getSession().prepare(
-					"INSERT INTO " + viewId
-					+ "(id, name, category, customer_name, price, purchase_date)"
-					+ " VALUES (?,?,?,?,?,?);");
-			batchStmt.add(stmt.bind(id,name,category,customerName,
-				price,sqlPurchaseDate));
-		}
-
-		DBConnection.getSession().execute(batchStmt);
-	}
-	
-	public List<Row> getSpecificResults(String columnName, String specificValue) {
+	public void insertQuery(String query) {	
 		PreparedStatement stmt = DBConnection.getSession().prepare(
-				"SELECT * FROM " + columnName
-				+ " WHERE " + columnPrivKeysMap.get(columnName) + "=?;");
+				"INSERT INTO " + QUERIES_TABLE
+				+ "(id,query)"
+				+ " VALUES(?,?);");
+		DBConnection.getSession().execute(stmt.bind(idCounter, query));
 		
-		ResultSet results = DBConnection.getSession()
-							.execute(stmt.bind(specificValue));
-		
-		return results.all();
+		stmt = DBConnection.getSession().prepare(
+				"INSERT INTO " + RESULTS_TABLE
+				+ "(id,result)"
+				+ " VALUES(?,?);");
+		DBConnection.getSession().execute(stmt.bind(idCounter++, 0));
 	}
 	
-	private String parseCreateQuery(String columnName, 
-									List<DBColumnDefinition> columns)
-					throws Exception {
-		List<String> primaryKeys = new LinkedList<String>();
-		List<String> clusteringKeys = new LinkedList<String>();
-		StringBuilder query = new StringBuilder("CREATE TABLE " + columnName + " (");
-		for (DBColumnDefinition entry : columns) {
-			query.append(entry.getName());
-			query.append(" ");
-			query.append(entry.getDataType());
-			query.append(",");
-			if (entry.isPrimaryKey()) primaryKeys.add(entry.getName());
-			if (entry.isClusteringKey()) clusteringKeys.add(entry.getName());
-		}
-		query.append("PRIMARY KEY (");
-		if (primaryKeys.size() > 0) {
-			//TODO: decide whether handling composite partition key is possible
-			if (primaryKeys.size() > 1) {
-				throw new Exception("Only one primary key is allowed");
-			}
-			else
-				query.append(primaryKeys.get(0));
-		}
-		else {
-			/* setting default primary key for first column */
-			query.append(columns.get(0).getName());
-		}
-		if (clusteringKeys.size() > 0) {
-			for (String string : clusteringKeys) {
-				query.append(",");
-				query.append(string);
-			}
-		}
-		query.append("));");
+	public int getResultsForId(int id) {
+		PreparedStatement stmt = DBConnection.getSession().prepare(
+				"SELECT * FROM " + RESULTS_TABLE
+				+ " WHERE id=?;");
 		
-		columnPrivKeysMap.put(columnName, primaryKeys.get(0));
-		return query.toString();
+		return DBConnection.getSession()
+				.execute(stmt.bind(id))
+				.all().get(0).getInt("result");
 	}
 	
-	public void deleteView(String name) {
-		DBConnection.getSession().execute("DROP TABLE IF EXISTS " + name + ";");
+	public Map<Integer,String> getAllQueries() {
+		Map<Integer,String> results = new HashMap<Integer, String>();
+		String stmt = "SELECT * FROM " + QUERIES_TABLE + ";";
+		int maxIndex = 0;
+		
+		for (Row row: DBConnection.getSession().execute(stmt)) {
+			maxIndex = row.getInt("id");
+			if (maxIndex > idCounter)
+				idCounter = maxIndex;
+			results.put(maxIndex, row.getString("query"));
+		}
+		
+		return results;
 	}
-
+	
 }

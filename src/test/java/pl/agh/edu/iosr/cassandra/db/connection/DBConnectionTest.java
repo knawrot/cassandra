@@ -6,6 +6,10 @@ import com.datastax.driver.core.Session;
 import junit.framework.TestCase;
 
 public class DBConnectionTest extends TestCase {
+
+	protected void setUp() throws Exception {
+		super.setUp();
+	}
 	
 	public void shouldConnect() {
 		Cluster cluster = Cluster.builder()
