@@ -89,10 +89,9 @@ Ostatnia z kluczowych metod - ```getAllQueries()``` - pobiera wszystkie istniej�
 Zanim przystąpimy do uruchomienia aplikacji warto upewnić się, że wykorzystywane przez nas tabele ```queries``` i ```results``` isteniją w bazie danych. Można tego dokonać z poziomu bazowego commandline'a (*apache-cassandra/bin/cqlsh*), wykonując prostego select'a. Należy jednak pamiętać o przejściu do keyspace'a (```USE demo;```).
 Istnieją dwie możliwości uruchomienia tej aplikacji:
 
-1. W katalogu */cassandra-development* klastra należy wykonać następujące polecenie:
+* W katalogu */cassandra-development* klastra należy wykonać następujące polecenie:
 ```bash
 java -jar cassandra-0.0.1-SNAPSHOT-jar-with-dependencies.jar
 ```
 Położenie pliku *.jar* nie ma jednak znaczenia - przy starcie używane są ścieżki bezwzględne dla kompomnentów
-
-2. Sklonować powyższe repozytorium i wygenerować plik *.jar* za pomocą fazy ```package``` dostarczonego pliku *pom.xml*. Następnie, umieścić ten plik na klastrze, w dowolnym katalogu.
+* Sklonować powyższe repozytorium i wygenerować plik *.jar* za pomocą fazy ```package``` dostarczonego pliku *pom.xml*. Następnie, umieścić ten plik na klastrze, w dowolnym katalogu.
