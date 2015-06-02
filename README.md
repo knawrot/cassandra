@@ -38,9 +38,8 @@ public static void main(String[] args) {
 		//2
 		while (!shouldQuit) {
 			(...)
-			try {
-				queryId = new Integer(text);
-				queries.put(queryId, queriesManager.getQuery(queryId));
+			queryId = new Integer(text);
+			queries.put(queryId, queriesManager.getQuery(queryId));
 			(...)
 		}
 		
