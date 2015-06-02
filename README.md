@@ -2,7 +2,7 @@
 Projekt ten jest podmudułem dla projektu [lambda-stack](https://github.com/PuszekSE/lambda-stack). 
 
 ## Wstep
-Niniejszy projekt, oprócz funkcjonalności związanych z obsługa Cassandry, jest także punktem startowym aplikacji, w ktorym dokonuje się wstępna konfiguracja - definiowanie zapytań, przeglądanie rezultatów. 
+Niniejszy projekt, oprócz funkcjonalności związanych z obsługa Cassandry, jest także punktem startowym aplikacji, w ktorym dokonuje się wstępna konfiguracja - definiowanie zapytań - oraz przeglądanie rezultatów. 
 
 ## Architektura
 ### Tabele w bazie danych
@@ -29,11 +29,13 @@ Metoda startowa programu prezentuje się następująco (pewne nieistotne fragmen
 public static void main(String[] args) {
 		(...)
 		
+		//1
 		QueriesManager queriesManager = new QueriesManager(scanner, dbHandler);
 		queriesManager.operate();
 		
 		(...)
 		
+		//2
 		while (!shouldQuit) {
 			(...)
 			try {
@@ -42,10 +44,12 @@ public static void main(String[] args) {
 			(...)
 		}
 		
+		//3
 		runOnLocalhost();
 		
 		(...)
 		
+		//4
 		ResultsManager resultsManager = new ResultsManager(scanner, dbHandler, queries);
 		resultsManager.operate();
 
@@ -54,12 +58,12 @@ public static void main(String[] args) {
 ```
 
 Jak nie trudno zauważyć, można tu wyróżnić 4 etapy:
-* zarządzanie zapytaniami (```queriesManager```):
-** wyświetlanie istniejących w bazie zapytań wraz z ich ID, które posłuży przy pozyskiwaniu rezultatów
-** dodanie nowego zapytania
-* wybór z dostępnej listy zapytań tych, które zamierzamy odpalić na Stormie (```queries.put(...)```)
-* uruchomienie aplikacji Storma ([podmoduł Storm projektu](https://github.com/michallorens/storm-kafka))
-* przeglądanie rezultatów dla wykonywanych zapytań (```resultsManager```)
+1. zarządzanie zapytaniami (```queriesManager```):
+	* wyświetlanie istniejących w bazie zapytań wraz z ich ID, które posłuży przy pozyskiwaniu rezultatów
+	* dodanie nowego zapytania
+2. wybór z dostępnej listy zapytań tych, które zamierzamy odpalić na Stormie (```queries.put(...)```)
+3. uruchomienie aplikacji Storma ([podmoduł Storm projektu](https://github.com/michallorens/storm-kafka))
+4. przeglądanie rezultatów dla wykonywanych zapytań (```resultsManager```)
  
 ### DBHandler
 
