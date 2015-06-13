@@ -1,8 +1,9 @@
 package pl.agh.edu.iosr.cassandra;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,48 +13,31 @@ import pl.agh.edu.iosr.cassandra.client.QueriesManager;
 import pl.agh.edu.iosr.cassandra.client.ResultsManager;
 import pl.agh.edu.iosr.cassandra.db.DBHandler;
 import pl.agh.edu.iosr.cassandra.db.connection.DBConnection;
-
+import pl.agh.edu.iosr.cassandra.exceptions.StormCommunicationException;
+import pl.edu.agh.iosr.lambda.kafkastorm.KafkaStormInterface;
+import backtype.storm.generated.AlreadyAliveException;
+import backtype.storm.generated.InvalidTopologyException;
 
 
 public class Main {
 	private static Map<Integer,String> queries;
 	
-	private static void runOnLocalhost() {
+	private static void sendQueriesToStorm() throws StormCommunicationException {
 		try {
-			String line;
-			String command = "/home/hadoop/apache-storm-0.9.4/bin/storm"
-				+ " jar"
-				+ " /home/hadoop/kafkastorm-0.0.2-SNAPSHOT-jar-with-dependencies.jar"
-				+ " pl.edu.agh.iosr.lambda.kafkastorm.KafkaStormTopology"
-				+ "  -sql \"";
+			Registry registry = LocateRegistry.getRegistry("localhost", 1099);
+			KafkaStormInterface stormRemote = (KafkaStormInterface) registry
+												.lookup("KafkaStormTopology");
 			for (Entry<Integer,String> entry : queries.entrySet()) {
-				command += entry.getValue() + ";";
+				stormRemote.createTopology(null, null, "topologyFor" + entry.getKey(), null,
+						null, null, null, entry.getKey() + " " + entry.getValue(),
+						null);
 			}
-			command += "\"";
-			System.out.println(command);
-			Process p = Runtime.getRuntime().exec(new String[]{
-											"bash"
-											,"-c"
-											,command});
-			BufferedReader bri = new BufferedReader
-			        (new InputStreamReader(p.getInputStream()));
-			BufferedReader bre = new BufferedReader
-					(new InputStreamReader(p.getErrorStream()));
-			while ((line = bri.readLine()) != null) {
-				System.out.println(line);
-			}
-			bri.close();
-			while ((line = bre.readLine()) != null) {
-				System.out.println(line);
-			}
-			bre.close();
-			p.waitFor();
-			p.destroy();
-			System.out.println("Components started successfully.");
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+			Thread.sleep(5000);
+		} catch (RemoteException | NotBoundException | AlreadyAliveException 
+				| InvalidTopologyException | InterruptedException e) {
+			throw new StormCommunicationException((e.getMessage() != null) ?
+													e.getMessage()
+													: e.toString());
 		}
 	}
 	
@@ -89,7 +73,12 @@ public class Main {
 			}
 		}
 		
-		runOnLocalhost();
+		try {
+			sendQueriesToStorm();
+		} catch (StormCommunicationException e) {
+			System.err.println(e.getMessage());
+			System.exit(0);
+		}
 		
 		System.out.println("List of queries with their ids:");
 		System.out.println("ID  QUERY");

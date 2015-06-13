@@ -14,9 +14,18 @@ public class DBHandler {
 	private static final String QUERIES_TABLE = "queries";
 	private static final String RESULTS_TABLE = "results";
 	private int idCounter;
+	private PreparedStatement insertQueryStmt;
+	private PreparedStatement fetchResultsStmt;
 
 	public DBHandler() {
 		idCounter = updateIdCounter();
+		fetchResultsStmt = DBConnection.getSession().prepare(
+				"SELECT * FROM " + RESULTS_TABLE
+				+ " WHERE query_id=?;");
+		insertQueryStmt = DBConnection.getSession().prepare(
+				"INSERT INTO " + QUERIES_TABLE
+				+ "(id,query)"
+				+ " VALUES(?,?);");
 	}
 	
 	private int updateIdCounter() {
@@ -25,27 +34,17 @@ public class DBHandler {
 	}
 	
 	public void insertQuery(String query) {	
-		PreparedStatement stmt = DBConnection.getSession().prepare(
-				"INSERT INTO " + QUERIES_TABLE
-				+ "(id,query)"
-				+ " VALUES(?,?);");
-		DBConnection.getSession().execute(stmt.bind(idCounter, query));
-		
-		stmt = DBConnection.getSession().prepare(
-				"INSERT INTO " + RESULTS_TABLE
-				+ "(id,result)"
-				+ " VALUES(?,?);");
-		DBConnection.getSession().execute(stmt.bind(idCounter++, 0));
+		DBConnection.getSession().execute(insertQueryStmt.bind(idCounter, query));
+		idCounter++;
 	}
 	
-	public int getResultsForId(int id) {
-		PreparedStatement stmt = DBConnection.getSession().prepare(
-				"SELECT * FROM " + RESULTS_TABLE
-				+ " WHERE id=?;");
+	public Map<String, String> getResultsForId(int id) {		
+		Map<String, String> results = new HashMap<String, String>();
+		for (Row row: DBConnection.getSession().execute(fetchResultsStmt.bind(id))) {
+			results.put(row.getString("group_by"), row.getString("result"));
+		}
 		
-		return DBConnection.getSession()
-				.execute(stmt.bind(id))
-				.all().get(0).getInt("result");
+		return results;
 	}
 	
 	public Map<Integer,String> getAllQueries() {

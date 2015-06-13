@@ -1,6 +1,7 @@
 package pl.agh.edu.iosr.cassandra.client;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 import pl.agh.edu.iosr.cassandra.db.DBHandler;
@@ -17,17 +18,39 @@ public class ResultsManager implements Manager {
 		this.dbHandler = dbHandler;
 	}
 
-	//TODO: do while loop over results
+	//TODO: return to providing queries
 	public void operate() {
-		System.out.println("Provide query id: ");
-		printResults(scanner.nextInt());
+		int operation;
+		boolean shouldExit = false;
+		
+		while (!shouldExit) {
+			System.out.println("Choose one of the following options:\n"
+					+ "1. Print results for given query id\n"
+					+ "2. Exit program");
+			operation = Integer.parseInt(scanner.nextLine());
+			switch (operation) {
+				case 1:
+					System.out.println("Provide query id: ");
+					printResults(Integer.parseInt(scanner.nextLine()));
+					break;
+				case 2:
+					System.out.println("Exiting results manager...");
+					shouldExit = true;
+					break;
+				default:
+					System.out.println("Wrong option. "
+										+ "Only (1) and (2) allowed!\n");
+			}
+		}
 	}
 
 	private void printResults(int id) {
-		int result = dbHandler.getResultsForId(id);
-		System.out.println("Result for \""
-				+ queries.get(id) + "\": \n"
-				+ result);
+		Map<String, String> result = dbHandler.getResultsForId(id);
+		System.out.println("Result for \"" + queries.get(id) + "\"\n");
+		System.out.println("GROUP  |  RESULT");
+		for (Entry<String, String> entry : result.entrySet()) {
+			System.out.println(entry.getKey() + " | " + entry.getValue());
+		}
 	}
 	
 
