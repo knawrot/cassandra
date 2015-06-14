@@ -44,7 +44,7 @@ public static void main(String[] args) {
 		}
 		
 		//3
-		runOnLocalhost();
+		sendQueriesToStorm();
 		
 		(...)
 		
@@ -62,7 +62,7 @@ Jak nie trudno zauważyć, można tu wyróżnić 4 etapy:
 	* wyświetlanie istniejących w bazie zapytań wraz z ich ID, które posłuży przy pozyskiwaniu rezultatów
 	* dodanie nowego zapytania
 2. wybór z dostępnej listy zapytań tych, które zamierzamy odpalić na Stormie (```queries.put(...)```)
-3. uruchomienie aplikacji Storma ([podmoduł Storm projektu](https://github.com/michallorens/storm-kafka))
+3. dynamiczne przekazywanie zapytań do aplikacji Storma ([podmoduł Storm projektu](https://github.com/michallorens/storm-kafka))
 4. przeglądanie rezultatów dla wykonywanych zapytań (```resultsManager```)
  
 ### DBHandler
