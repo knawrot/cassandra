@@ -1,3 +1,7 @@
+DROP KEYSPACE demo
+CREATE KEYSPACE demo
+WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+
 USE demo;
 
 DROP TABLE IF EXISTS results;
