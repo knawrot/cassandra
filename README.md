@@ -12,13 +12,14 @@ Wykorzystywane przez nas tabele mają następujące definicje:
 TABLE queries (
 	id int,
 	query varchar,
-	PRIMARY KEY(id)
+	PRIMARY KEY (id)
 );
 
 TABLE results (
-	id int,
+	query_id int,
+	group_by varchar,
 	result varchar,
-	PRIMARY KEY(id)
+	PRIMARY KEY (query_id, group_by)
 );
 
 ```
@@ -44,7 +45,7 @@ public static void main(String[] args) {
 		}
 		
 		//3
-		runOnLocalhost();
+		sendQueriesToStorm();
 		
 		(...)
 		
@@ -62,7 +63,7 @@ Jak nie trudno zauważyć, można tu wyróżnić 4 etapy:
 	* wyświetlanie istniejących w bazie zapytań wraz z ich ID, które posłuży przy pozyskiwaniu rezultatów
 	* dodanie nowego zapytania
 2. wybór z dostępnej listy zapytań tych, które zamierzamy odpalić na Stormie (```queries.put(...)```)
-3. uruchomienie aplikacji Storma ([podmoduł Storm projektu](https://github.com/michallorens/storm-kafka))
+3. dynamiczne przekazywanie zapytań do aplikacji Storma ([podmoduł Storm projektu](https://github.com/michallorens/storm-kafka))
 4. przeglądanie rezultatów dla wykonywanych zapytań (```resultsManager```)
  
 ### DBHandler
@@ -73,7 +74,7 @@ Poniżej przedstawiono klasę obsługującą komunikację z bazą danych:
 public class DBHandler {
 
 	public void insertQuery(String query);
-	public int getResultsForId(int id);
+	public List<QueryResultsRow> getResultsForId(int id);
 	public Map<Integer,String> getAllQueries();
 	
 }
@@ -81,7 +82,7 @@ public class DBHandler {
 
 Metoda ```insertQuery()``` wstawia podane zapytanie do tabeli ```queries```, a także inicjalizuje powiązany z zapytaniem wiersz w tabeli ```results```.
 
-Metoda ```getResultsForId()``` odpytuje tabelę ```results``` o wynik zapytania o podanym ID. Ponieważ w większości przypadków są to dane liczbowe, metoda zwraca typ całkowity.
+Metoda ```getResultsForId()``` odpytuje tabelę ```results``` o wynik zapytania o podanym ID. Zwraca liste ```QueryResultsRow```, które to obiekty reprezentuja pojedyńczy wiersz (dla zapytań z ```group by``` takich wierszy jest wiecej niż jeden).
 
 Ostatnia z kluczowych metod - ```getAllQueries()``` - pobiera wszystkie istniejące w bazie zapytania i zwraca je w postaci kolekcji ```Map```: ``` {[id_zapytania], [zapytanie]} ```. Warto tu zaznaczyć, iż dane te są cache'owane w aplikacji i uaktualniane w przypadku dodanie kolejnego zapytania do bazy.
 
