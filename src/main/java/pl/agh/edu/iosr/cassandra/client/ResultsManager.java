@@ -1,10 +1,11 @@
 package pl.agh.edu.iosr.cassandra.client;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Scanner;
 
 import pl.agh.edu.iosr.cassandra.db.DBHandler;
+import pl.agh.edu.iosr.cassandra.entities.QueryResultsRow;
 
 public class ResultsManager implements Manager {
 	private Scanner scanner;
@@ -45,11 +46,11 @@ public class ResultsManager implements Manager {
 	}
 
 	private void printResults(int id) {
-		Map<String, String> result = dbHandler.getResultsForId(id);
+		List<QueryResultsRow> result = dbHandler.getResultsForId(id);
 		System.out.println("Result for \"" + queries.get(id) + "\"\n");
 		System.out.println("GROUP  |  RESULT");
-		for (Entry<String, String> entry : result.entrySet()) {
-			System.out.println(entry.getKey() + " | " + entry.getValue());
+		for (QueryResultsRow entry : result) {
+			System.out.println(entry.getGroupBy() + " | " + entry.getResult());
 		}
 	}
 	

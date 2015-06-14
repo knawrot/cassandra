@@ -1,11 +1,14 @@
 package pl.agh.edu.iosr.cassandra.db;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import pl.agh.edu.iosr.cassandra.db.connection.DBConnection;
+import pl.agh.edu.iosr.cassandra.entities.QueryResultsRow;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
@@ -38,10 +41,11 @@ public class DBHandler {
 		idCounter++;
 	}
 	
-	public Map<String, String> getResultsForId(int id) {		
-		Map<String, String> results = new HashMap<String, String>();
+	public List<QueryResultsRow> getResultsForId(int id) {		
+		List<QueryResultsRow> results = new ArrayList<QueryResultsRow>();
 		for (Row row: DBConnection.getSession().execute(fetchResultsStmt.bind(id))) {
-			results.put(row.getString("group_by"), row.getString("result"));
+			results.add(new QueryResultsRow(id, row.getString("group_by"), 
+										row.getString("result")));
 		}
 		
 		return results;
